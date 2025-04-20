@@ -87,10 +87,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   selectedManagerId: null,
   fetchManagers: async () => {
     try {
-      console.log('Fetching Google account managers...');
       
       const response = await api.get('api/googledata/accessible-customers');
-      console.log('Raw Google account managers response:', response);
       
       // Ensure we're setting the correct data structure from the API response
       // The API might return the array directly or nested in a data property
@@ -100,11 +98,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         managersData = response.data.customers;
       }
       
-      console.log('Processed Google account managers:', managersData);
       set({ availableManagers: managersData });
     } catch (error) {
-      console.error('Failed to fetch managers:', error);
-      // Set empty array on error to avoid map issues
+            // Set empty array on error to avoid map issues
       set({ availableManagers: [] });
       throw error;
     }
@@ -115,10 +111,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   customers: [],
   fetchCustomers: async () => {
     try {
-      console.log('Fetching customers for selected manager...');
       
       const response = await api.get('api/customer/customers/');
-      console.log('Raw customers response:', response);
       
       // Ensure we're setting the correct data structure from the API response
       let customersData: Customer[] = [];
@@ -147,11 +141,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           ga_customer_label: customer.ga_customer_label || null
         }));
       
-      console.log('Processed customers:', customersData);
       set({ customers: customersData });
       return customersData;
     } catch (error) {
-      console.error('Failed to fetch customers:', error);
       set({ customers: [] });
       throw error;
     }
@@ -169,8 +161,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
     
     try {
-      console.log('Fetching customer performance data...');
-      console.log('Parameters:', { selectedManagerId, startDate, endDate, customerCount: customers.length });
       
       // Extract client IDs from customers
       const clientIds = customers.map(customer => customer.ga_customer_id.toString());
@@ -184,7 +174,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
       
       const taskResponse = response.data as TaskResponse;
-      console.log('Task created:', taskResponse);
       
       set({
         currentTaskId: taskResponse.task_id,
@@ -194,7 +183,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       // Immediately start checking the task status
       await get().checkTaskStatus();
     } catch (error) {
-      console.error('Failed to fetch customer data:', error);
       set({ taskStatus: 'FAILED' });
       throw error;
     }
@@ -207,24 +195,19 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
     
     try {
-      console.log('Checking task status for ID:', currentTaskId);
       
       const response = await api.get(`api/googledata/tasks/${currentTaskId}`);
       const taskResponse = response.data as TaskResponse;
       
-      console.log('Task status update:', taskResponse.status);
       set({ taskStatus: taskResponse.status });
       
       if (taskResponse.status === 'SUCCESS' && taskResponse.result) {
-        console.log('Task completed successfully with data');
         set({ taskResult: taskResponse.result });
       } else if (taskResponse.status !== 'SUCCESS' && taskResponse.status !== 'FAILED') {
         // Continue polling if task is still in progress
-        console.log('Task still in progress, continuing to poll');
         setTimeout(() => get().checkTaskStatus(), 1000);
       }
     } catch (error) {
-      console.error('Failed to check task status:', error);
       set({ taskStatus: 'FAILED' });
       throw error;
     }

@@ -12,16 +12,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const location = useLocation();
-  
-  // Add debug logs
-  useEffect(() => {
-    console.log('DashboardLayout - Auth state:', isAuthenticated);
-    console.log('DashboardLayout - User data:', user);
-  }, [isAuthenticated, user]);
-  
+    
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
-    console.log('DashboardLayout - Not authenticated, redirecting to login');
     return <Navigate to="/login" replace={true} />;
   }
   

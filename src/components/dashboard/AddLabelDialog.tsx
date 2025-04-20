@@ -13,7 +13,7 @@ import api from "@/lib/axios";
 // Define types
 interface Label {
   id: number;
-  name: string;
+  label: string;
 }
 
 interface AddLabelDialogProps {
@@ -47,7 +47,7 @@ export function AddLabelDialog({ open, onOpenChange, onLabelAdded }: AddLabelDia
     setIsSubmitting(true);
     try {
       const response = await api.post("/api/customer/labels/", {
-        name: values.name.trim(),
+        label: values.name.trim(),
       });
       
       if (response.data) {

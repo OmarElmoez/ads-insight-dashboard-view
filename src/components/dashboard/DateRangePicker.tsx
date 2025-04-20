@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -46,29 +45,31 @@ const DateRangePicker = ({
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <div className="p-3 space-y-3">
-            <div className="space-y-1.5">
-              <div className="font-medium text-sm">Start Date</div>
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={onStartDateChange}
-                disabled={(date) => date > (endDate || new Date())}
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <div className="font-medium text-sm">End Date</div>
-              <Calendar
-                mode="single"
-                selected={endDate}
-                onSelect={onEndDateChange}
-                disabled={(date) =>
-                  date < (startDate || new Date(0)) || date > new Date()
-                }
-                initialFocus
-                className={cn("p-3 pointer-events-auto")}
-              />
+            <div className="flex flex-row space-x-3">
+              <div className="space-y-1.5">
+                <div className="font-medium text-sm">Start Date</div>
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={onStartDateChange}
+                  disabled={(date) => date > (endDate || new Date())}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <div className="font-medium text-sm">End Date</div>
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={onEndDateChange}
+                  disabled={(date) =>
+                    date < (startDate || new Date(0)) || date > new Date()
+                  }
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </div>
             </div>
             <Button
               onClick={() => setIsDatePickerOpen(false)}
