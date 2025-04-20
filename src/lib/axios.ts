@@ -11,25 +11,13 @@ const api = axios.create({
   },
 });
 
-// Add missing endpoints if not in the backend
+// Request interceptor for adding token
 api.interceptors.request.use(
   (config) => {
-    // Handle missing endpoints for Google OAuth
-    if (config.url === 'google/oauth/token' && config.method === 'post') {
-      // Modify to use the install endpoint if token endpoint doesn't exist
-      // This is a temporary solution until the backend implements the token endpoint
-      config.url = 'google/oauth/install';
-      config.method = 'get';
-      // The credential will be ignored, and we'll get a redirect URL instead
-    }
-    
     // Add token to headers
     const token = localStorage.getItem('access_token');
     if (token) {
-      console.log('Adding token to request headers');
       config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      console.log('No token found in localStorage for request');
     }
     return config;
   },
@@ -45,11 +33,8 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    console.log('Response error status:', error.response?.status);
-    
     // If error is 401 and not already retrying
     if (error.response?.status === 401 && !originalRequest._retry) {
-      console.log('Attempting to refresh token due to 401 error');
       originalRequest._retry = true;
       
       try {
