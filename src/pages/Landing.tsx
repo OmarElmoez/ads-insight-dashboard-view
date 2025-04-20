@@ -43,7 +43,7 @@ const Landing = () => {
                 onClick={() => navigate("/login")} 
                 variant="outline" 
                 size="lg" 
-                className="text-white border-white hover:bg-slate-800">
+                className="text-white bg-transparent border-white hover:bg-slate-800">
                 Sign in
               </Button>
             </div>

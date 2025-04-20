@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -29,6 +28,9 @@ const Dashboard = () => {
 
   // Format currency
   const formatCurrency = (value: number) => {
+    if (typeof value !== 'number' || isNaN(value)) {
+      return '$0.00';
+    }
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -38,6 +40,9 @@ const Dashboard = () => {
 
   // Format percentage
   const formatPercentage = (value: number) => {
+    if (typeof value !== 'number' || isNaN(value)) {
+      return '0.00%';
+    }
     return `${value.toFixed(2)}%`;
   };
 

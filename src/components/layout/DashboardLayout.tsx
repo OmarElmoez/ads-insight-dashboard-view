@@ -1,9 +1,8 @@
-
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import { useAuthStore } from "@/stores/authStore";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -11,10 +10,19 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const location = useLocation();
+  
+  // Add debug logs
+  useEffect(() => {
+    console.log('DashboardLayout - Auth state:', isAuthenticated);
+    console.log('DashboardLayout - User data:', user);
+  }, [isAuthenticated, user]);
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    console.log('DashboardLayout - Not authenticated, redirecting to login');
+    return <Navigate to="/login" replace={true} />;
   }
   
   return (

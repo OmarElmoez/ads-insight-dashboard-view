@@ -1,6 +1,6 @@
-
 import axios from 'axios';
 
+// For temporary testing - bypass CORS issues
 const baseURL = 'https://webnwellapiv2.otomatika.tech/';
 
 // Create axios instance
@@ -16,11 +16,15 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
     if (token) {
+      console.log('Adding token to request headers');
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.log('No token found in localStorage for request');
     }
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
@@ -31,8 +35,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
+    console.log('Response error status:', error.response?.status);
+    
     // If error is 401 and not already retrying
     if (error.response?.status === 401 && !originalRequest._retry) {
+      console.log('Attempting to refresh token due to 401 error');
       originalRequest._retry = true;
       
       try {
@@ -57,10 +64,14 @@ api.interceptors.response.use(
         // Retry the original request
         return api(originalRequest);
       } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        
         // If refresh fails, logout
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user_data');
         window.location.href = '/login';
+        
         return Promise.reject(refreshError);
       }
     }

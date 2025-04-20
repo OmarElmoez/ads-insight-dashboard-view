@@ -1,4 +1,3 @@
-
 import { Customer, CustomerData } from "@/stores/dashboardStore";
 import { Loader } from "lucide-react";
 import {
@@ -28,11 +27,14 @@ const CustomerPerformanceTable = ({
   formatPercentage,
 }: CustomerPerformanceTableProps) => {
   const findCustomerData = (customerId: number): CustomerData | undefined => {
-    if (!taskResult || !taskResult.data) return undefined;
+    if (!taskResult || !taskResult.data || !Array.isArray(taskResult.data)) return undefined;
     return taskResult.data.find(
-      (data) => data.customer_id === customerId.toString()
+      (data) => data && data.customer_id === customerId.toString()
     );
   };
+
+  // Ensure customers is an array
+  const safeCustomers = Array.isArray(customers) ? customers : [];
 
   return (
     <div className="rounded-md border">
@@ -52,44 +54,50 @@ const CustomerPerformanceTable = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {customers.length > 0 ? (
-            customers.map((customer: Customer) => {
+          {safeCustomers.length > 0 ? (
+            safeCustomers.map((customer: Customer) => {
               const customerData = findCustomerData(customer.ga_customer_id);
               return (
-                <TableRow key={customer.ga_customer_id}>
+                <TableRow key={customer.ga_customer_id || 'unknown'}>
                   <TableCell className="font-medium">
-                    {customer.ga_customer_name}
+                    {customer.ga_customer_name || 'Unknown Customer'}
                   </TableCell>
                   <TableCell>
-                    {formatCurrency(customer.ga_current_budget)}
+                    {formatCurrency(customer.ga_current_budget || 0)}
                   </TableCell>
                   <TableCell>
-                    {formatCurrency(customer.ga_ideal_daily_spend)}
+                    {formatCurrency(customer.ga_ideal_daily_spend || 0)}
                   </TableCell>
                   <TableCell>
-                    {formatPercentage(customer.ga_budget_pacing)}
+                    {formatPercentage(customer.ga_budget_pacing || 0)}
                   </TableCell>
                   <TableCell>
-                    {customerData ? formatCurrency(customerData.cpc) : "-"}
+                    {customerData && typeof customerData.cpc === 'number' 
+                      ? formatCurrency(customerData.cpc) 
+                      : "-"}
                   </TableCell>
                   <TableCell>
-                    {customerData ? formatCurrency(customerData.spend) : "-"}
+                    {customerData && typeof customerData.spend === 'number'
+                      ? formatCurrency(customerData.spend) 
+                      : "-"}
                   </TableCell>
                   <TableCell>
-                    {customerData ? customerData.clicks.toLocaleString() : "-"}
+                    {customerData && typeof customerData.clicks === 'number'
+                      ? customerData.clicks.toLocaleString() 
+                      : "-"}
                   </TableCell>
                   <TableCell>
-                    {customerData
+                    {customerData && typeof customerData.all_conversions === 'number'
                       ? customerData.all_conversions.toLocaleString()
                       : "-"}
                   </TableCell>
                   <TableCell>
-                    {customerData
+                    {customerData && typeof customerData.conversion_value === 'number'
                       ? formatCurrency(customerData.conversion_value)
                       : "-"}
                   </TableCell>
                   <TableCell>
-                    {customerData
+                    {customerData && typeof customerData.cost_per_conversions === 'number'
                       ? formatCurrency(customerData.cost_per_conversions)
                       : "-"}
                   </TableCell>

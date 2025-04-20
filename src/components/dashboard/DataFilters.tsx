@@ -1,4 +1,3 @@
-
 import { Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,11 +44,17 @@ const DataFilters = ({
             <SelectValue placeholder="Select Google Account" />
           </SelectTrigger>
           <SelectContent>
-            {availableManagers.map((manager) => (
-              <SelectItem key={manager.id} value={manager.id}>
-                {manager.name}
+            {Array.isArray(availableManagers) && availableManagers.length > 0 ? (
+              availableManagers.map((manager) => (
+                <SelectItem key={manager.id || 'unknown'} value={manager.id || 'unknown'}>
+                  {manager.name || 'Unnamed Account'}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="no-accounts" disabled>
+                No accounts available
               </SelectItem>
-            ))}
+            )}
           </SelectContent>
         </Select>
       </div>
