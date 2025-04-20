@@ -97,25 +97,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       let managersData = [];
       
       if (response && response.data) {
-        if (Array.isArray(response.data)) {
-          managersData = response.data;
-        } else if (response.data.data && Array.isArray(response.data.data)) {
-          managersData = response.data.data;
-        } else if (response.data.results && Array.isArray(response.data.results)) {
-          managersData = response.data.results;
-        } else if (typeof response.data === 'object') {
-          // If it's an object but not in the expected format, try to convert it
-          try {
-            managersData = Object.values(response.data)
-              .filter(item => typeof item === 'object' && item !== null)
-              .map((item: any) => ({
-                id: item.id || item.manager_id || '',
-                name: item.name || item.manager_name || item.display_name || ''
-              }));
-          } catch (conversionError) {
-            console.error('Error converting response data to managers array:', conversionError);
-          }
-        }
+        managersData = response.data.customers;
       }
       
       console.log('Processed Google account managers:', managersData);

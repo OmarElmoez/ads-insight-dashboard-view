@@ -11,9 +11,19 @@ const api = axios.create({
   },
 });
 
-// Request interceptor for adding token
+// Add missing endpoints if not in the backend
 api.interceptors.request.use(
   (config) => {
+    // Handle missing endpoints for Google OAuth
+    if (config.url === 'google/oauth/token' && config.method === 'post') {
+      // Modify to use the install endpoint if token endpoint doesn't exist
+      // This is a temporary solution until the backend implements the token endpoint
+      config.url = 'google/oauth/install';
+      config.method = 'get';
+      // The credential will be ignored, and we'll get a redirect URL instead
+    }
+    
+    // Add token to headers
     const token = localStorage.getItem('access_token');
     if (token) {
       console.log('Adding token to request headers');
