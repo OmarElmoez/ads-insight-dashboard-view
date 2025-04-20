@@ -36,12 +36,26 @@ export const useGoogleStore = create<GoogleState>((set, get) => ({
   
   connectGoogle: async () => {
     try {
-      // Instead of making an API call, directly open the OAuth URL
-      // This is the most reliable approach as it skips any potential CORS issues
+      // Open the OAuth URL in a popup window
       const googleOAuthUrl = `${baseURL}/google/oauth/install`;
       
-      // Open the URL in a new tab - this will redirect to Google's auth page
-      window.open(googleOAuthUrl, '_blank');
+      // Configure popup window dimensions and position
+      const width = 800;
+      const height = 600;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      // Open the popup window
+      const popup = window.open(
+        googleOAuthUrl,
+        'Google OAuth',
+        `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no`
+      );
+      
+      // Check if popup was blocked
+      if (!popup) {
+        throw new Error('Popup was blocked. Please allow popups for this site.');
+      }
       
       return Promise.resolve();
     } catch (error) {
