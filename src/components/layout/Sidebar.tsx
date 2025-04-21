@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Home, BarChart2, Menu, X, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
@@ -7,6 +7,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import logoImage from "@/assets/logo.jpeg";
 import { useAuthStore } from "@/stores/authStore";
+import { useSidebarStore } from "@/stores/sidebarStore";
 
 const menuItems = [
   {
@@ -22,8 +23,9 @@ const menuItems = [
 ];
 
 const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Use the sidebar store instead of local state
+  const { isOpen, isCollapsed, toggleSidebar, toggleCollapse } = useSidebarStore();
+  
   const isMobile = useMediaQuery("(max-width: 768px)");
   const sidebarRef = useRef<HTMLDivElement>(null);
   const logout = useAuthStore((state) => state.logout);
@@ -45,24 +47,16 @@ const Sidebar = () => {
   // Use click outside hook globally to close sidebar
   useClickOutside(sidebarRef, () => {
     if (isOpen && !isCollapsed && !disableClickOutside) {
-      setIsCollapsed(true);
+      useSidebarStore.setState({ isCollapsed: true });
     }
   }, !isMobile); // Only enable on desktop
 
   // For mobile, still use click outside to close the mobile sidebar
   useClickOutside(sidebarRef, () => {
     if (isOpen && !disableClickOutside) {
-      setIsOpen(false);
+      useSidebarStore.setState({ isOpen: false });
     }
   }, isMobile);
-
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
 
   const handleLogout = () => {
     logout();
@@ -70,18 +64,6 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Mobile sidebar toggle button */}
-      {isMobile && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="fixed top-4 left-4 z-50 md:hidden"
-          onClick={toggleSidebar}
-        >
-          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
-      )}
-
       {/* Sidebar */}
       <aside
         ref={sidebarRef}
@@ -125,23 +107,9 @@ const Sidebar = () => {
             isCollapsed ? "px-2" : "px-3"
           )}>
             {menuItems.map((item) => (
-              <div key={item.path} onClick={(e) => {
-                if (isCollapsed) {
-                  // e.stopPropagation();
-                  console.log("clicked icon");
-                }
-              }}>
+              <div key={item.path}>
                 <NavLink
                   to={item.path}
-                  // onClick={(e) => {
-                  //   // When sidebar is collapsed and we're clicking a navigation link,
-                  //   // prevent event propagation to keep sidebar collapsed
-                  //   if (isCollapsed) {
-                  //     e.stopPropagation();
-                  //     // console.log("clicked icon");
-                  //     // setIsCollapsed(true);
-                  //   }
-                  // }}
                   className={({ isActive }) =>
                     cn(
                       "flex items-center py-2 text-sm font-medium rounded-md transition-all",
@@ -165,41 +133,34 @@ const Sidebar = () => {
 
           {/* Logout Button - now alone at the bottom */}
           <div className={cn(
-            "p-4 border-t border-gray-200 transition-all",
-            isCollapsed ? "flex justify-center p-2" : ""
+            "p-3 border-t flex justify-center",
+            isCollapsed ? "px-2" : "px-3"
           )}>
-            {isCollapsed ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent sidebar from expanding
-                  handleLogout();
-                }}
-                className="h-8 w-8"
-                title="Logout"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={handleLogout}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size={isCollapsed ? "icon" : "default"}
+              className={cn(
+                "w-full text-gray-600 hover:text-gray-900 hover:bg-gray-50",
+                isCollapsed ? "h-10 w-10 rounded-full" : ""
+              )}
+              onClick={handleLogout}
+              title={isCollapsed ? "Logout" : undefined}
+            >
+              <LogOut className={cn(
+                "h-5 w-5",
+                isCollapsed ? "" : "mr-2"
+              )} />
+              {!isCollapsed && <span>Logout</span>}
+            </Button>
           </div>
         </div>
       </aside>
 
-      {/* Backdrop for mobile */}
+      {/* Mobile Backdrop */}
       {isMobile && isOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/50 md:hidden"
-          onClick={() => setIsOpen(false)}
+          onClick={() => useSidebarStore.setState({ isOpen: false })}
         />
       )}
     </>

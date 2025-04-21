@@ -1,5 +1,6 @@
 import { useAuthStore } from "@/stores/authStore";
 import { useGoogleStore } from "@/stores/googleStore";
+import { useSidebarStore } from "@/stores/sidebarStore";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,10 +10,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, RefreshCw } from "lucide-react";
+import { LogOut, RefreshCw, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const Navbar = () => {
   const logout = useAuthStore((state) => state.logout);
@@ -21,6 +23,8 @@ const Navbar = () => {
   const isConnected = useGoogleStore((state) => state.isConnected);
   const googleUser = useGoogleStore((state) => state.googleUser);
   const [isChecking, setIsChecking] = useState(true);
+  const { toggleSidebar } = useSidebarStore();
+  const isMobile = useMediaQuery("(max-width: 768px)");
   
   // Check connection status on mount
   useEffect(() => {
@@ -103,6 +107,19 @@ const Navbar = () => {
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
+            {/* Sidebar Toggle Button for Mobile */}
+            {isMobile && (
+              <Button 
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="mr-2"
+                aria-label="Toggle sidebar"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
+            
             <div className="flex-shrink-0 flex items-center">
               <div className={cn(
                 "font-bold text-xl tracking-tight",
