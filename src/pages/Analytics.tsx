@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +16,7 @@ import {
   Cell,
 } from "recharts";
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"];
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D", "#FF5733", "#6495ED", "#9932CC", "#E9967A"];
 
 const Analytics = () => {
   const { customers, taskResult } = useDashboardStore();
@@ -46,17 +45,30 @@ const Analytics = () => {
       setChartData(data);
       
       // Prepare pie chart data for spend distribution
-      const pieData = customers.map((customer, index) => {
+      const totalSpend = customers.reduce((sum, customer) => {
         const customerData = taskResult.data.find(
           (data) => data.customer_id === customer.ga_customer_id.toString()
         );
-        
-        return {
-          name: customer.ga_customer_name,
-          value: customerData?.spend || 0,
-          color: COLORS[index % COLORS.length],
-        };
-      });
+        return sum + (customerData?.spend || 0);
+      }, 0);
+
+      // Filter to only include customers with non-zero spend
+      const pieData = customers
+        .map((customer, index) => {
+          const customerData = taskResult.data.find(
+            (data) => data.customer_id === customer.ga_customer_id.toString()
+          );
+          const spend = customerData?.spend || 0;
+          
+          return {
+            name: customer.ga_customer_name,
+            value: spend,
+            color: COLORS[index % COLORS.length],
+            percentage: totalSpend > 0 ? (spend / totalSpend * 100).toFixed(1) : '0',
+          };
+        })
+        .filter(item => item.value > 0) // Filter out zero spend
+        .sort((a, b) => b.value - a.value); // Sort by spend (highest first)
       
       setPieData(pieData);
     }
@@ -206,27 +218,62 @@ const Analytics = () => {
             </CardHeader>
             <CardContent>
               <div className="h-[350px]">
-                {pieData.length > 0 && pieData.some(item => item.value > 0) ? (
+                {pieData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={pieData}
                         cx="50%"
-                        cy="50%"
+                        cy="45%"
                         labelLine={false}
-                        outerRadius={120}
+                        label={false}
+                        outerRadius={90}
+                        innerRadius={50}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
-                        }
+                        paddingAngle={3}
                       >
                         {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.color} 
+                            stroke="#fff"
+                            strokeWidth={2}
+                          />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                      <Legend />
+                      <Tooltip 
+                        formatter={(value) => formatCurrency(value as number)}
+                        labelFormatter={(name) => `${name}`}
+                        contentStyle={{ 
+                          borderRadius: '8px', 
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)', 
+                          padding: '8px 12px' 
+                        }}
+                      />
+                      <Legend 
+                        layout="vertical"
+                        align="right"
+                        verticalAlign="middle"
+                        iconSize={10}
+                        iconType="circle"
+                        wrapperStyle={{
+                          paddingLeft: '10px',
+                          fontSize: '12px'
+                        }}
+                        formatter={(value, entry: any, index) => {
+                          // Calculate percent for display
+                          const percent = entry.payload.percentage;
+                          return (
+                            <span style={{ color: '#333', display: 'inline-block', marginLeft: 4 }}>
+                              <span style={{ color: entry.color, fontWeight: 'bold' }}>
+                                {value}
+                              </span>
+                              {` (${percent}%)`}
+                            </span>
+                          );
+                        }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
