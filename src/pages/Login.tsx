@@ -21,18 +21,12 @@ const Login = () => {
   const login = useAuthStore((state) => state.login);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
-  
-  console.log('Login Component - Initial render, auth state:', isAuthenticated);
-  console.log('Login Component - User data:', user);
-  
+
   // Redirect if already authenticated - only once on component mount
   useEffect(() => {
-    console.log('Login page - Auth effect triggered, redirectChecked:', redirectChecked);
     
     if (!redirectChecked) {
-      console.log('Login page - Checking auth state:', isAuthenticated);
       if (isAuthenticated) {
-        console.log('Login page - Already authenticated, redirecting to dashboard');
         navigate('/dashboard', { replace: true });
       }
       setRedirectChecked(true);
@@ -44,7 +38,6 @@ const Login = () => {
     
     // Prevent duplicate login attempts
     if (loginAttempted.current) {
-      console.log('Login already attempted, ignoring duplicate submission');
       return;
     }
     
@@ -52,11 +45,8 @@ const Login = () => {
     setError("");
     setIsLoading(true);
     
-    console.log('Login - Submitting login form for user:', username);
-    
     try {
       await login(username, password);
-      console.log('Login - Login successful, navigating to dashboard');
       navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error('Login - Login failed:', err);

@@ -12,6 +12,7 @@ import {
 import { LogOut, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "@/components/ui/use-toast";
+import { cn } from "@/lib/utils";
 
 const Navbar = () => {
   const logout = useAuthStore((state) => state.logout);
@@ -103,8 +104,13 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold md:hidden">AD</span>
-              <span className="text-xl font-bold hidden md:block">Ads Dashboard</span>
+              <div className={cn(
+                "font-bold text-xl tracking-tight",
+                "bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent"
+              )}>
+                <span className="font-extrabold">webn</span>
+                <span className="italic">well</span>
+              </div>
             </div>
           </div>
           

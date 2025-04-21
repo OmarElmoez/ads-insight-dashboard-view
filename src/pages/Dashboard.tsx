@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader } from "lucide-react";
 import { useDashboardStore } from "@/stores/dashboardStore";
 import DataFilters from "@/components/dashboard/DataFilters";
 import CustomerPerformanceTable from "@/components/dashboard/CustomerPerformanceTable";
@@ -11,6 +12,7 @@ const Dashboard = () => {
     new Date(new Date().setMonth(new Date().getMonth() - 1))
   );
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
+  const [isLoadingManagers, setIsLoadingManagers] = useState(true);
 
   const {
     availableManagers,
@@ -48,7 +50,18 @@ const Dashboard = () => {
 
   // Fetch managers on component mount
   useEffect(() => {
-    fetchManagers().catch(console.error);
+    const getManagers = async () => {
+      setIsLoadingManagers(true);
+      try {
+        await fetchManagers();
+      } catch (error) {
+        console.error("Failed to fetch managers:", error);
+      } finally {
+        setIsLoadingManagers(false);
+      }
+    };
+    
+    getManagers();
   }, [fetchManagers]);
 
   // Fetch customers when a manager is selected
@@ -100,17 +113,24 @@ const Dashboard = () => {
             <CardTitle>Data Filters</CardTitle>
           </CardHeader>
           <CardContent>
-            <DataFilters
-              availableManagers={availableManagers}
-              selectedManagerId={selectedManagerId}
-              startDate={startDate}
-              endDate={endDate}
-              taskStatus={taskStatus}
-              onManagerChange={handleManagerChange}
-              onStartDateChange={setStartDate}
-              onEndDateChange={setEndDate}
-              onFetchData={handleFetchData}
-            />
+            {isLoadingManagers ? (
+              <div className="flex items-center justify-center h-24">
+                <Loader className="h-6 w-6 animate-spin mr-2" />
+                <span>Loading managers...</span>
+              </div>
+            ) : (
+              <DataFilters
+                availableManagers={availableManagers}
+                selectedManagerId={selectedManagerId}
+                startDate={startDate}
+                endDate={endDate}
+                taskStatus={taskStatus}
+                onManagerChange={handleManagerChange}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                onFetchData={handleFetchData}
+              />
+            )}
           </CardContent>
         </Card>
 

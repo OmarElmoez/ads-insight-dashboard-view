@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { toast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AddLabelDialog } from "@/components/dashboard/AddLabelDialog";
+import { useDashboardStore } from "@/stores/dashboardStore";
 
 // Define types
 interface Label {
@@ -39,6 +40,7 @@ export function AddCustomerDialog({ open, onOpenChange }: AddCustomerDialogProps
   const [labels, setLabels] = useState<Label[]>([]);
   const [isLoadingLabels, setIsLoadingLabels] = useState(true);
   const [showAddLabelDialog, setShowAddLabelDialog] = useState(false);
+  const fetchCustomers = useDashboardStore(state => state.fetchCustomers);
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -98,16 +100,39 @@ export function AddCustomerDialog({ open, onOpenChange }: AddCustomerDialogProps
   };
 
   // Submit handler
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log("Form values:", values);
-    // Here you would submit to your API
-    // For now, just log and close
-    toast({
-      title: "Customer added",
-      description: "Customer information has been submitted",
-    });
-    onOpenChange(false);
-    form.reset();
+    
+    try {
+      // Map form values to required API parameters
+      const payload = {
+        ga_customer_id: values.customer_id,
+        ga_customer_name: values.name,
+        ga_current_budget: Number(values.budget),
+        ga_customer_label: Number(values.label_id)
+      };
+      
+      // Submit to the correct API endpoint
+      const response = await api.post("/api/customer/customers/", payload);
+      
+      toast({
+        title: "Customer added",
+        description: "Customer has been successfully added to the system",
+      });
+      
+      // Refresh the customers list in the store
+      await fetchCustomers();
+      
+      onOpenChange(false);
+      form.reset();
+    } catch (error) {
+      console.error("Failed to add customer:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add customer. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

@@ -26,6 +26,8 @@ export interface ProcessedAccount {
   name: string;
 }
 
+export type TaskStatus = 'PENDING' | 'STARTED' | 'SUCCESS' | 'FAILURE' | 'RETRY' | 'REVOKED';
+
 export interface TaskResult {
   data: CustomerData[];
   processed_count: number;
@@ -34,7 +36,7 @@ export interface TaskResult {
 
 interface TaskResponse {
   task_id: string;
-  status: string;
+  status: TaskStatus;
   manager_id?: string;
   client_count?: number;
   message?: string;
@@ -70,7 +72,7 @@ interface DashboardState {
   
   // Task management
   currentTaskId: string | null;
-  taskStatus: string | null;
+  taskStatus: TaskStatus | null;
   taskResult: TaskResult | null;
   fetchCustomerData: () => Promise<void>;
   checkTaskStatus: () => Promise<void>;
@@ -183,7 +185,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       // Immediately start checking the task status
       await get().checkTaskStatus();
     } catch (error) {
-      set({ taskStatus: 'FAILED' });
+      set({ taskStatus: 'FAILURE' });
       throw error;
     }
   },
@@ -203,12 +205,19 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       
       if (taskResponse.status === 'SUCCESS' && taskResponse.result) {
         set({ taskResult: taskResponse.result });
-      } else if (taskResponse.status !== 'SUCCESS' && taskResponse.status !== 'FAILED') {
+      } else if (
+        // Continue polling for these statuses
+        taskResponse.status === 'PENDING' || 
+        taskResponse.status === 'STARTED' || 
+        taskResponse.status === 'RETRY'
+      ) {
         // Continue polling if task is still in progress
         setTimeout(() => get().checkTaskStatus(), 1000);
       }
+      // For FAILURE and REVOKED, we stop polling
+      
     } catch (error) {
-      set({ taskStatus: 'FAILED' });
+      set({ taskStatus: 'FAILURE' });
       throw error;
     }
   }

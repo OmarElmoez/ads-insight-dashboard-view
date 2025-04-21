@@ -1,4 +1,4 @@
-import { Loader } from "lucide-react";
+import { Loader, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -8,13 +8,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import DateRangePicker from "./DateRangePicker";
+import { TaskStatus } from "@/stores/dashboardStore";
 
 interface DataFiltersProps {
   availableManagers: Array<{ id: string; name: string }>;
   selectedManagerId: string | null;
   startDate: Date | undefined;
   endDate: Date | undefined;
-  taskStatus: string | null;
+  taskStatus: TaskStatus | null;
   onManagerChange: (value: string) => void;
   onStartDateChange: (date: Date | undefined) => void;
   onEndDateChange: (date: Date | undefined) => void;
@@ -32,6 +33,47 @@ const DataFilters = ({
   onEndDateChange,
   onFetchData,
 }: DataFiltersProps) => {
+  // Determine if button should be disabled
+  const isButtonDisabled = !selectedManagerId || 
+                          !startDate || 
+                          !endDate || 
+                          taskStatus === "STARTED" || 
+                          taskStatus === "PENDING" ||
+                          taskStatus === "RETRY";
+
+  // Get button text and icon based on status
+  const getButtonContent = () => {
+    switch(taskStatus) {
+      case "STARTED":
+        return (
+          <>
+            <Loader className="mr-2 h-4 w-4 animate-spin" />
+            Processing...
+          </>
+        );
+      case "PENDING":
+        return (
+          <>
+            <Loader className="mr-2 h-4 w-4 animate-spin" />
+            Queued...
+          </>
+        );
+      case "RETRY":
+        return (
+          <>
+            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+            Retrying...
+          </>
+        );
+      case "FAILURE":
+        return "Retry Data Fetch";
+      case "REVOKED":
+        return "Fetch Data Again";
+      default:
+        return "Fetch Data";
+    }
+  };
+
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {/* Manager/Customer Dropdown */}
@@ -71,17 +113,10 @@ const DataFilters = ({
       <div className="flex items-end">
         <Button
           onClick={onFetchData}
-          disabled={!selectedManagerId || !startDate || !endDate || taskStatus === "STARTED"}
+          disabled={isButtonDisabled}
           className="w-full"
         >
-          {taskStatus === "STARTED" ? (
-            <>
-              <Loader className="mr-2 h-4 w-4 animate-spin" />
-              Loading Data...
-            </>
-          ) : (
-            "Fetch Data"
-          )}
+          {getButtonContent()}
         </Button>
       </div>
     </div>
