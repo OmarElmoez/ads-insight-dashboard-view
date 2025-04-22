@@ -147,6 +147,7 @@ const Dashboard = () => {
               selectedManagerId={selectedManagerId}
               formatCurrency={formatCurrency}
               formatPercentage={formatPercentage}
+              refreshCustomers={fetchCustomers}
             />
           </CardContent>
         </Card>

@@ -2,12 +2,14 @@ import { create } from 'zustand';
 import api from '@/lib/axios';
 
 export interface Customer {
+  id?: number;
   ga_customer_id: number;
   ga_customer_name: string;
   ga_current_budget: number;
   ga_ideal_daily_spend: number;
   ga_budget_pacing: number;
   ga_customer_label: string | null;
+  ga_customer_label_name?: string | null;
 }
 
 export interface CustomerData {
@@ -135,12 +137,14 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       customersData = customersData
         .filter(customer => customer && typeof customer === 'object')
         .map(customer => ({
+          id: customer.id,
           ga_customer_id: customer.ga_customer_id || 0,
           ga_customer_name: customer.ga_customer_name || 'Unknown Customer',
           ga_current_budget: customer.ga_current_budget || 0,
           ga_ideal_daily_spend: customer.ga_ideal_daily_spend || 0,
           ga_budget_pacing: customer.ga_budget_pacing || 0,
-          ga_customer_label: customer.ga_customer_label || null
+          ga_customer_label: customer.ga_customer_label || null,
+          ga_customer_label_name: customer.ga_customer_label_name || null
         }));
       
       set({ customers: customersData });

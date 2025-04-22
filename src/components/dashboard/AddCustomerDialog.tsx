@@ -66,10 +66,8 @@ export function AddCustomerDialog({ open, onOpenChange }: AddCustomerDialogProps
     try {
       const response = await api.get("/api/customer/labels/");
       const labelsData = response.data || [];
-      console.log("Loaded labels:", labelsData);
       setLabels(labelsData);
     } catch (error) {
-      console.error("Failed to load labels:", error);
       toast({
         title: "Error",
         description: "Failed to load labels. Please try again.",
@@ -83,7 +81,6 @@ export function AddCustomerDialog({ open, onOpenChange }: AddCustomerDialogProps
 
   // Handler for when a new label is added
   const handleLabelAdded = (newLabel: Label) => {
-    console.log("New label added:", newLabel);
     // Add new label to existing labels without triggering a full reload
     setLabels(prevLabels => [...prevLabels, newLabel]);
     form.setValue("label_id", newLabel.id.toString());
@@ -101,7 +98,6 @@ export function AddCustomerDialog({ open, onOpenChange }: AddCustomerDialogProps
 
   // Submit handler
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log("Form values:", values);
     
     try {
       // Map form values to required API parameters
@@ -126,7 +122,6 @@ export function AddCustomerDialog({ open, onOpenChange }: AddCustomerDialogProps
       onOpenChange(false);
       form.reset();
     } catch (error) {
-      console.error("Failed to add customer:", error);
       toast({
         title: "Error",
         description: "Failed to add customer. Please try again.",

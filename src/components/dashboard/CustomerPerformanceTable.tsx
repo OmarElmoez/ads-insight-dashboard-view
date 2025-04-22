@@ -1,5 +1,5 @@
 import { Customer, CustomerData, TaskStatus } from "@/stores/dashboardStore";
-import { Loader, Plus, RefreshCw, AlertCircle, XCircle } from "lucide-react";
+import { Loader, Plus, RefreshCw, AlertCircle, XCircle, Edit, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,8 +11,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { AddCustomerDialog } from "./AddCustomerDialog";
+import { EditCustomerDialog } from "./EditCustomerDialog";
 import api from "@/lib/axios";
 import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Label {
   id: number;
@@ -26,6 +38,7 @@ interface CustomerPerformanceTableProps {
   selectedManagerId: string | null;
   formatCurrency: (value: number) => string;
   formatPercentage: (value: number) => string;
+  refreshCustomers: () => void;
 }
 
 const CustomerPerformanceTable = ({
@@ -35,10 +48,16 @@ const CustomerPerformanceTable = ({
   selectedManagerId,
   formatCurrency,
   formatPercentage,
+  refreshCustomers,
 }: CustomerPerformanceTableProps) => {
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [labels, setLabels] = useState<Label[]>([]);
   const [isLoadingLabels, setIsLoadingLabels] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showEditCustomer, setShowEditCustomer] = useState(false);
+  const [customerToEdit, setCustomerToEdit] = useState<Customer | null>(null);
 
   // Load labels function that can be called whenever needed
   const loadLabels = async () => {
@@ -183,6 +202,49 @@ const CustomerPerformanceTable = ({
   // Common cell styles
   const cellStyles = "text-center";
 
+  // Handle customer deletion
+  const handleDeleteCustomer = async () => {
+    if (!customerToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      // Use id instead of ga_customer_id for API calls
+      await api.delete(`/api/customer/customers/${customerToDelete.id}/`);
+      toast({
+        title: "Customer deleted",
+        description: `${customerToDelete.ga_customer_name} has been removed successfully.`,
+      });
+      
+      // Refresh customers list
+      refreshCustomers();
+    } catch (error) {
+      console.error("Failed to delete customer:", error);
+      toast({
+        title: "Delete failed",
+        description: "There was an error deleting the customer. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setCustomerToDelete(null);
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  // Handle edit customer
+  const handleEditCustomer = (customer: Customer) => {
+    setCustomerToEdit(customer);
+    setShowEditCustomer(true);
+  };
+
+  // Handle edit customer dialog change
+  const handleEditCustomerDialogChange = (open: boolean) => {
+    setShowEditCustomer(open);
+    if (!open) {
+      setCustomerToEdit(null);
+    }
+  };
+
   return (
     <>
       <div className="rounded-md border">
@@ -201,6 +263,7 @@ const CustomerPerformanceTable = ({
               <TableHead className="text-center">Conversions</TableHead>
               <TableHead className="text-center">Conversion Value</TableHead>
               <TableHead className="text-center">Cost Per Conversion</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -229,7 +292,7 @@ const CustomerPerformanceTable = ({
                             boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
                           }}
                         >
-                          {getLabelName(customer.ga_customer_label)}
+                          {customer.ga_customer_label_name || getLabelName(customer.ga_customer_label)}
                         </div>
                       ) : (
                         "-"
@@ -274,12 +337,37 @@ const CustomerPerformanceTable = ({
                         ? formatCurrency(customerData.cost_per_conversions)
                         : "-"}
                     </TableCell>
+                    <TableCell className={cellStyles}>
+                      <div className="flex justify-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditCustomer(customer)}
+                          className="h-8 w-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                        >
+                          <Edit className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setCustomerToDelete(customer);
+                            setDeleteDialogOpen(true);
+                          }}
+                          className="h-8 w-8 text-red-600 hover:text-red-800 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 );
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={12} className="text-center py-6">
+                <TableCell colSpan={13} className="text-center py-6">
                   {selectedManagerId
                     ? "No customer data available. Select a date range and click 'Fetch Data'."
                     : "Please select a Google account first."}
@@ -287,7 +375,7 @@ const CustomerPerformanceTable = ({
               </TableRow>
             )}
             <TableRow>
-              <TableCell colSpan={12} className="text-center py-4 hover:bg-gray-50">
+              <TableCell colSpan={13} className="text-center py-4 hover:bg-gray-50">
                 <Button 
                   variant="ghost" 
                   className="flex items-center mx-auto text-blue-600 hover:text-blue-800"
@@ -323,6 +411,43 @@ const CustomerPerformanceTable = ({
         open={showAddCustomer} 
         onOpenChange={handleAddCustomerDialogChange}
       />
+
+      {/* Edit Customer Dialog */}
+      <EditCustomerDialog
+        open={showEditCustomer}
+        onOpenChange={handleEditCustomerDialogChange}
+        customer={customerToEdit}
+        refreshCustomers={refreshCustomers}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {customerToDelete?.ga_customer_name}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteCustomer}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
